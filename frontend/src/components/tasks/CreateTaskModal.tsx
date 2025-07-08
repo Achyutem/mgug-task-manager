@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { User } from "../../types";
-
+import { format } from "date-fns";
+import { User, Task } from "../../types";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,20 +25,31 @@ interface CreateTaskModalProps {
   open: boolean;
   handleClose: () => void;
   onTaskCreated: () => void;
+  task?: Task | null;
 }
 
 const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   open,
   handleClose,
   onTaskCreated,
+  task,
 }) => {
+  const isEditMode = Boolean(task);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState("Medium");
+  const [priority, setPriority] = useState<"Medium" | "High" | "Low">("Medium");
   const [dueDate, setDueDate] = useState("");
   const [assignee_id, setAssigneeId] = useState("");
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setPriority("Medium");
+    setDueDate("");
+    setAssigneeId("");
+  };
 
   useEffect(() => {
     if (open) {
@@ -55,8 +67,18 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         }
       };
       fetchUsers();
+
+      if (isEditMode && task) {
+        setTitle(task.title);
+        setDescription(task.description || "");
+        setPriority(task.priority);
+        setDueDate(format(new Date(task.due_date), "yyyy-MM-dd"));
+        setAssigneeId(String(task.assignee_id));
+      } else {
+        resetForm();
+      }
     }
-  }, [open]);
+  }, [task, open, isEditMode]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -71,16 +93,24 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         dueDate,
         assignee_id: Number(assignee_id),
       };
-      await axios.post("http://localhost:5000/api/tasks", taskData, config);
+
+      if (isEditMode) {
+        await axios.put(
+          `http://localhost:5000/api/tasks/${task!.id}`,
+          taskData,
+          config
+        );
+      } else {
+        await axios.post("http://localhost:5000/api/tasks", taskData, config);
+      }
+
       onTaskCreated();
       handleClose();
-      setTitle("");
-      setDescription("");
-      setPriority("Medium");
-      setDueDate("");
-      setAssigneeId("");
     } catch (error) {
-      console.error("Failed to create task", error);
+      console.error(
+        isEditMode ? "Failed to update task" : "Failed to create task",
+        error
+      );
     } finally {
       setLoading(false);
     }
@@ -88,11 +118,18 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] bg-slate-50">
         <DialogHeader>
-          <DialogTitle>Create New Task</DialogTitle>
+          <DialogTitle className="text-2xl font-bold text-slate-800">
+            {isEditMode ? "Edit Task" : "Create New Task"}
+          </DialogTitle>
+          <DialogDescription>
+            {isEditMode
+              ? "Update the details of the task below."
+              : "Fill out the details below to create and assign a new task."}
+          </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4 py-2">
+        <form onSubmit={handleSubmit} className="space-y-4 pt-4">
           <div className="space-y-2">
             <Label htmlFor="title">Title</Label>
             <Input
@@ -108,7 +145,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              rows={3}
+              rows={4}
+              className="w-full" // Ensures textarea respects parent width
+              placeholder="Add a description. You can use #tags and @mentions..."
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -126,15 +165,17 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               <Label htmlFor="priority">Priority</Label>
               <Select
                 value={priority}
-                onValueChange={(value) => setPriority(value)}
+                onValueChange={(value: "Low" | "Medium" | "High") =>
+                  setPriority(value)
+                }
               >
                 <SelectTrigger id="priority">
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Low">Low</SelectItem>
-                  <SelectItem value="Medium">Medium</SelectItem>
                   <SelectItem value="High">High</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="Low">Low</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -144,6 +185,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
             <Select
               value={assignee_id}
               onValueChange={(value) => setAssigneeId(value)}
+              required
             >
               <SelectTrigger id="assignee">
                 <SelectValue placeholder="Select a user..." />
@@ -157,14 +199,18 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               </SelectContent>
             </Select>
           </div>
-
-          {/* Action buttons in form for proper submit behavior on Enter key */}
           <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" type="button" onClick={handleClose}>
+            <Button variant="ghost" type="button" onClick={handleClose}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "Creating..." : "Create Task"}
+              {loading
+                ? isEditMode
+                  ? "Saving..."
+                  : "Creating..."
+                : isEditMode
+                ? "Save Changes"
+                : "Create Task"}
             </Button>
           </div>
         </form>
