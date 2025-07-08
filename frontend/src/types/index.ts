@@ -6,6 +6,7 @@ export interface User {
 
 export interface Task {
   id: number;
+  ticket_id: string;
   title: string;
   description: string;
   status: "Assigned" | "In Progress" | "Completed";
