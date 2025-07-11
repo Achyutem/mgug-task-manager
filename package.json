@@ -1,5 +1,5 @@
 {
-  "name": "your-project",
+  "name": "task-manager",
   "version": "1.0.0",
   "scripts": {
     "dev": "concurrently -n FRONTEND,BACKEND -c blue,green \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\""
