@@ -159,9 +159,45 @@ const updateTask = async (req, res) => {
   }
 };
 
+/**
+ * @desc    Delete a task
+ * @route   DELETE /api/tasks/:id
+ * @access  Private
+ * @description Delete a task. Only the assigner of the task can delete it.
+ */
+const deleteTask = async (req, res) => {
+  const taskId = req.params.id;
+  const userId = req.user.id;
+
+  try {
+    // Check if the task exists and if the user is the assigner
+    const [task] = await pool.query(
+      "SELECT assigner_id FROM tasks WHERE id = ?",
+      [taskId]
+    );
+
+    if (task.length === 0) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    if (task[0].assigner_id !== userId) {
+      return res
+        .status(403)
+        .json({ message: "User not authorized to delete this task" });
+    }
+
+    await pool.query("DELETE FROM tasks WHERE id = ?", [taskId]);
+    res.json({ message: "Task deleted successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
 module.exports = {
   getTasks,
   createTask,
   updateTaskStatus,
   updateTask,
+  deleteTask,
 };

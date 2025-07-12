@@ -5,6 +5,7 @@ const {
   createTask,
   updateTaskStatus,
   updateTask,
+  deleteTask,
 } = require("../controllers/taskController");
 const { protect } = require("../middleware/authMiddleware");
 
@@ -16,5 +17,8 @@ router.route("/:id").put(protect, updateTask);
 
 // Route to update only a task's status
 router.route("/:id/status").patch(protect, updateTaskStatus);
+
+// Route to delete a task
+router.route("/:id").delete(protect, deleteTask);
 
 module.exports = router;
