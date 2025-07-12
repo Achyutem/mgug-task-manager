@@ -19,8 +19,72 @@ import {
   Calendar,
   Edit,
   Minus,
+  Trash,
   User,
 } from "lucide-react";
+import { useTheme } from "@/context/themeProvider"; // Import the useTheme hook
+
+// --- DYNAMIC, HIGH-CONTRAST COLOR CONFIGURATIONS ---
+
+// Colors for Light Mode (your original colors)
+const priorityConfigLight = {
+  High: {
+    icon: ArrowUpRight,
+    className: "bg-red-100 text-red-700",
+    borderClass: "border-l-4 border-red-500",
+  },
+  Medium: {
+    icon: ArrowDownRight,
+    className: "bg-yellow-100 text-yellow-700",
+    borderClass: "border-l-4 border-yellow-500",
+  },
+  Low: {
+    icon: Minus,
+    className: "bg-green-100 text-green-700",
+    borderClass: "border-l-4 border-green-500",
+  },
+};
+
+// New high-contrast colors for Dark Mode
+const priorityConfigDark = {
+  High: {
+    icon: ArrowUpRight,
+    className: "bg-red-900/50 text-red-400",
+    borderClass: "border-l-4 border-red-600",
+  },
+  Medium: {
+    icon: ArrowDownRight,
+    className: "bg-yellow-900/50 text-yellow-400",
+    borderClass: "border-l-4 border-yellow-600",
+  },
+  Low: {
+    icon: Minus,
+    className: "bg-green-900/50 text-green-400",
+    borderClass: "border-l-4 border-green-600",
+  },
+};
+
+const tagColorsLight = {
+  mention: "bg-blue-100 text-blue-800",
+  tag: "bg-purple-100 text-purple-800",
+};
+const tagColorsDark = {
+  mention: "bg-blue-900/50 text-blue-400",
+  tag: "bg-purple-900/50 text-purple-400",
+};
+
+const ticketIdColorsLight = [
+  "bg-red-100 text-red-800",
+  "bg-blue-100 text-blue-800",
+  "bg-green-100 text-green-800",
+  "bg-yellow-100 text-yellow-800",
+];
+const ticketIdColorsDark = [
+  "bg-red-900/50 text-red-400",
+  "bg-blue-900/50 text-blue-400",
+  "bg-green-900/50 text-green-400",
+  "bg-yellow-900/50 text-yellow-400",
+];
 
 const RenderDescriptionWithTags = ({
   text,
@@ -31,11 +95,13 @@ const RenderDescriptionWithTags = ({
   onTagClick: (tag: string) => void;
   truncateLength?: number;
 }) => {
+  const { theme } = useTheme(); // Get current theme
+  const activeTagColors = theme === "dark" ? tagColorsDark : tagColorsLight;
+
   const truncatedText =
     truncateLength && text.length > truncateLength
       ? text.substring(0, truncateLength) + "..."
       : text;
-
   const tagRegex = /(#[\w-]+|@[\w-]+)/g;
   const parts = truncatedText.split(tagRegex);
 
@@ -47,12 +113,9 @@ const RenderDescriptionWithTags = ({
           return (
             <Badge
               key={index}
-              variant="secondary"
               className={cn(
                 "cursor-pointer hover:font-bold mx-1",
-                isMention
-                  ? "bg-blue-100 text-blue-800"
-                  : "bg-purple-100 text-purple-800"
+                isMention ? activeTagColors.mention : activeTagColors.tag
               )}
               onClick={(e) => {
                 e.stopPropagation();
@@ -76,34 +139,6 @@ interface TaskListItemProps {
   onTagClick: (tag: string) => void;
 }
 
-const priorityConfig = {
-  High: {
-    icon: ArrowUpRight,
-    className: "bg-red-100 text-red-700",
-    borderClass: "border-l-4 border-red-500",
-  },
-  Medium: {
-    icon: ArrowDownRight,
-    className: "bg-yellow-100 text-yellow-700",
-    borderClass: "border-l-4 border-yellow-500",
-  },
-  Low: {
-    icon: Minus,
-    className: "bg-green-100 text-green-700",
-    borderClass: "border-l-4 border-green-500",
-  },
-};
-
-const getBadgeColor = (ticketId: number) => {
-  const colors = [
-    "bg-red-100 text-red-800",
-    "bg-blue-100 text-blue-800",
-    "bg-green-100 text-green-800",
-    "bg-yellow-100 text-yellow-800",
-  ];
-  return colors[ticketId % 4];
-};
-
 const TaskListItem: React.FC<TaskListItemProps> = ({
   task,
   onUpdate,
@@ -111,11 +146,20 @@ const TaskListItem: React.FC<TaskListItemProps> = ({
   onTagClick,
 }) => {
   const { user } = useAuth();
+  const { theme } = useTheme(); // Get current theme
+
+  // --- Select active color configuration based on the current theme ---
+  const activePriorityConfig =
+    theme === "dark" ? priorityConfigDark : priorityConfigLight;
+  const activeTicketIdColors =
+    theme === "dark" ? ticketIdColorsDark : ticketIdColorsLight;
+  const ticketIdColor = activeTicketIdColors[task.id % 4];
+
   const isAssignee = user && task.assignee_id === user.id;
   const isAssigner = user && task.assigner_id === user.id;
   const isDueDatePast =
     isPast(new Date(task.due_date)) && task.status !== "Completed";
-  const PriorityIcon = priorityConfig[task.priority].icon;
+  const PriorityIcon = activePriorityConfig[task.priority].icon;
 
   const handleStatusChange = async (newStatus: string) => {
     try {
@@ -132,34 +176,42 @@ const TaskListItem: React.FC<TaskListItemProps> = ({
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this task?")) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const config = { headers: { Authorization: `Bearer ${token}` } };
+      await axios.delete(`http://localhost:5000/api/tasks/${task.id}`, config);
+      onUpdate();
+    } catch (error) {
+      console.error("Failed to delete task", error);
+    }
+  };
+
   return (
     <div
       className={cn(
-        "bg-white rounded-md shadow-sm flex flex-col p-4 transition-all duration-300 ease-in-out",
-        "hover:shadow-xl hover:-translate-y-1",
-        "focus-within:ring-1 focus-within:ring-offset-2 focus-within:ring-indigo-500",
-        priorityConfig[task.priority].borderClass
+        "bg-card rounded-md border flex flex-col p-4 transition-all duration-300 ease-in-out",
+        "hover:shadow-xl hover:-translate-y-1 hover:border-primary",
+        "focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-ring focus-within:ring-offset-background",
+        activePriorityConfig[task.priority].borderClass
       )}
     >
       <div className="flex flex-col flex-grow justify-between gap-4">
-        {/* --- Top Section --- */}
         <div className="flex items-start justify-between w-full gap-4">
-          {/* Left side container that can shrink */}
           <div className="flex min-w-0 items-start gap-4">
             <Badge
-              className={cn(
-                "font-mono text-lg h-fit mt-1",
-                getBadgeColor(task.id)
-              )}
+              className={cn("font-mono text-lg h-fit mt-1", ticketIdColor)}
             >
               #{task.id}
             </Badge>
             <div className="flex flex-col gap-1.5">
-              <h3 className="text-lg font-semibold text-slate-800">
+              <h3 className="text-lg font-semibold text-foreground">
                 {task.title}
               </h3>
               {task.description && (
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-muted-foreground">
                   <RenderDescriptionWithTags
                     text={task.description}
                     onTagClick={onTagClick}
@@ -169,13 +221,11 @@ const TaskListItem: React.FC<TaskListItemProps> = ({
               )}
             </div>
           </div>
-          {/* Right side container that will not shrink */}
           <div className="flex-shrink-0">
             <Badge
-              variant="outline"
               className={cn(
                 "gap-1.5 py-1",
-                priorityConfig[task.priority].className
+                activePriorityConfig[task.priority].className
               )}
             >
               <PriorityIcon size={16} />
@@ -184,29 +234,26 @@ const TaskListItem: React.FC<TaskListItemProps> = ({
           </div>
         </div>
 
-        {/* --- Bottom Section --- */}
-        <div className="flex flex-col md:flex-row md:items-center gap-4 text-sm w-full border-t pt-4">
+        <div className="flex flex-col md:flex-row md:items-center gap-4 text-sm w-full border-t border-border pt-4">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <div
-              className="flex items-center gap-2 text-slate-600"
+              className="flex items-center gap-2 text-muted-foreground"
               title={`From ${task.assigner_name} to ${task.assignee_name}`}
             >
-              <User size={16} className="text-indigo-500" />
-              <span className="font-medium">From:</span>
+              <User size={16} className="text-primary" />
+              <span className="font-medium text-foreground">From:</span>
               <span>{task.assigner_name}</span>
-              <span className="font-medium">To:</span>
+              <span className="font-medium text-foreground">To:</span>
               <span>{task.assignee_name}</span>
             </div>
 
             <div
               title={`Due on ${format(new Date(task.due_date), "PPP")}`}
-              className="flex items-center gap-2 text-slate-600"
+              className="flex items-center gap-2 text-muted-foreground"
             >
               <Calendar
                 size={16}
-                className={cn(
-                  isDueDatePast ? "text-red-500" : "text-slate-500"
-                )}
+                className={cn(isDueDatePast && "text-red-500")}
               />
               <span
                 className={cn(isDueDatePast && "text-red-500 font-semibold")}
@@ -234,14 +281,24 @@ const TaskListItem: React.FC<TaskListItemProps> = ({
               </Badge>
             )}
             {isAssigner && (
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8 flex-shrink-0"
-                onClick={() => onEdit(task)}
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-8 w-8 flex-shrink-0"
+                  onClick={() => onEdit(task)}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="h-8 w-8 flex-shrink-0"
+                  onClick={handleDelete}
+                >
+                  <Trash className="h-4 w-4" />
+                </Button>
+              </>
             )}
           </div>
         </div>

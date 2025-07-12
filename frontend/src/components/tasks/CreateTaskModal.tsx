@@ -118,9 +118,11 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] bg-slate-50">
+      {/* Removed hardcoded bg-slate-50 to use theme's --card color */}
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-slate-800">
+          {/* Removed hardcoded text-slate-800 to use theme's --foreground color */}
+          <DialogTitle className="text-2xl font-bold">
             {isEditMode ? "Edit Task" : "Create New Task"}
           </DialogTitle>
           <DialogDescription>
@@ -146,7 +148,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
-              className="w-full" // Ensures textarea respects parent width
               placeholder="Add a description. You can use #tags and @mentions..."
             />
           </div>

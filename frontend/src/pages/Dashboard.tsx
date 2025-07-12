@@ -17,6 +17,7 @@ import CreateTaskModal from "../components/tasks/CreateTaskModal";
 import TaskListItem from "@/components/tasks/TaskListItem";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ModeToggle } from "@/components/themeToggle";
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -112,12 +113,12 @@ const Dashboard = () => {
     }
     if (list.length === 0) {
       return (
-        <div className="text-center py-16 border-2 border-dashed border-slate-200 rounded-lg md:col-span-2">
-          <Inbox className="mx-auto h-12 w-12 text-indigo-400" />
-          <h3 className="mt-4 text-lg font-medium text-slate-900">
+        <div className="text-center py-16 border-2 border-dashed border-border rounded-lg md:col-span-2">
+          <Inbox className="mx-auto h-12 w-12 text-muted-foreground" />
+          <h3 className="mt-4 text-lg font-medium text-foreground">
             No Tasks Found
           </h3>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-sm text-muted-foreground">
             Try adjusting your search or filters, or create a new task.
           </p>
         </div>
@@ -140,35 +141,27 @@ const Dashboard = () => {
 
   return (
     <>
-      <div className="min-h-screen w-full bg-slate-50">
+      <div className="min-h-screen w-full bg-background">
         <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
           <header className="flex justify-between items-center mb-8 gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-                Welcome Back, {user?.name || "User"}!
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                Welcome Back,{" "}
+                <span className="text-primary-foreground bg-primary px-2 rounded-md">
+                  {user?.name.toUpperCase() || "USER"}!
+                </span>
               </h1>
-              <p className="mt-1 text-md sm:text-lg text-slate-600">
-                Here's a focused look at all your tasks.
-              </p>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                size="default"
-                onClick={handleCreateClick}
-                className="bg-indigo-500 text-white hover:bg-indigo-600"
-              >
+              <Button size="default" onClick={handleCreateClick}>
                 <PlusCircle className="h-5 w-5 sm:mr-2" />
                 <span className="hidden sm:inline">Create Task</span>
               </Button>
-              <Button
-                variant="outline"
-                size="default"
-                onClick={handleLogout}
-                className="border-indigo-300 text-indigo-500 hover:bg-indigo-50 hover:text-indigo-600"
-              >
+              <Button variant="outline" size="default" onClick={handleLogout}>
                 <LogOut className="h-5 w-5 sm:mr-2" />
                 <span className="hidden sm:inline">Logout</span>
               </Button>
+              <ModeToggle />
             </div>
           </header>
 
@@ -179,39 +172,25 @@ const Dashboard = () => {
               className="space-y-6"
             >
               <div className="flex justify-center">
-                <TabsList className="inline-grid w-auto grid-cols-2 items-center justify-center gap-2 rounded-lg bg-slate-100 p-1.5">
-                  <TabsTrigger
-                    value="assigned"
-                    className="w-full rounded-md px-6 py-2 text-sm font-semibold transition-colors 
-                      data-[state=active]:bg-indigo-500 data-[state=active]:text-white 
-                      data-[state=inactive]:hover:bg-slate-200 data-[state=inactive]:hover:text-slate-800"
-                  >
-                    Assigned to Me
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="created"
-                    className="w-full rounded-md px-6 py-2 text-sm font-semibold transition-colors 
-                      data-[state=active]:bg-indigo-500 data-[state=active]:text-white 
-                      data-[state=inactive]:hover:bg-slate-200 data-[state=inactive]:hover:text-slate-800"
-                  >
-                    Created by Me
-                  </TabsTrigger>
+                <TabsList>
+                  <TabsTrigger value="assigned">Assigned to Me</TabsTrigger>
+                  <TabsTrigger value="created">Created by Me</TabsTrigger>
                 </TabsList>
               </div>
 
-              <div className="p-4 bg-white rounded-lg shadow-sm border flex flex-col md:flex-row items-center gap-3">
+              <div className="p-4 bg-card rounded-lg border flex flex-col md:flex-row items-center gap-3">
                 <div className="relative w-full flex-grow">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 peer-focus:text-indigo-500 transition-colors" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
-                    placeholder="Search by title, #tag, or #ticket-id..."
+                    placeholder="Search by title or #ticket-id..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 peer focus-visible:border-indigo-500 focus-visible:ring-0 focus-visible:ring-offset-0"
+                    className="pl-10"
                   />
                 </div>
 
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full md:w-[180px] hover:border-indigo-500 focus:border-indigo-500 focus:ring-0 focus:ring-offset-0">
+                  <SelectTrigger className="w-full md:w-[180px]">
                     <SelectValue placeholder="Filter by Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -225,7 +204,7 @@ const Dashboard = () => {
                   value={priorityFilter}
                   onValueChange={setPriorityFilter}
                 >
-                  <SelectTrigger className="w-full md:w-[180px] hover:border-indigo-500 focus:border-indigo-500 focus:ring-0 focus:ring-offset-0">
+                  <SelectTrigger className="w-full md:w-[180px]">
                     <SelectValue placeholder="Filter by Priority" />
                   </SelectTrigger>
                   <SelectContent>
@@ -235,11 +214,7 @@ const Dashboard = () => {
                   </SelectContent>
                 </Select>
 
-                <Button
-                  variant="ghost"
-                  onClick={clearFilters}
-                  className="w-full md:w-auto border border-transparent hover:border-indigo-500 focus-visible:border-indigo-500 focus-visible:ring-0 focus-visible:ring-offset-0"
-                >
+                <Button variant="ghost" onClick={clearFilters}>
                   <X className="h-4 w-4 mr-2" />
                   Clear
                 </Button>
