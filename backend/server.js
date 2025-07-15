@@ -10,7 +10,7 @@ const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json()); // for parsing application/json
+app.use(express.json());
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -22,7 +22,7 @@ app.get("/", (req, res) => {
   res.send("IT Task Manager API is running...");
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
