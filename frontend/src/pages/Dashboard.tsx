@@ -50,10 +50,7 @@ const Dashboard = () => {
           priority: priorityFilter,
         },
       };
-      const res = await axios.get<Task[]>(
-        "http://localhost:5000/api/tasks",
-        config
-      );
+      const res = await axios.get<Task[]>("/api/tasks", config);
       setTasks(res.data);
     } catch (error) {
       console.error(error);
@@ -173,8 +170,18 @@ const Dashboard = () => {
             >
               <div className="flex justify-center">
                 <TabsList>
-                  <TabsTrigger value="assigned">Assigned to Me</TabsTrigger>
-                  <TabsTrigger value="created">Created by Me</TabsTrigger>
+                  <TabsTrigger
+                    value="assigned"
+                    className="data-[state=active]:bg-primary data-[state=active]:text-white"
+                  >
+                    Assigned to Me
+                  </TabsTrigger>
+                  <TabsTrigger
+                    className="data-[state=active]:bg-primary data-[state=active]:text-white"
+                    value="created"
+                  >
+                    Created by Me
+                  </TabsTrigger>
                 </TabsList>
               </div>
 

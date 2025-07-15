@@ -22,26 +22,24 @@ import {
   Trash,
   User,
 } from "lucide-react";
-import { useTheme } from "@/context/themeProvider"; // Import the useTheme hook
-
-// --- DYNAMIC, HIGH-CONTRAST COLOR CONFIGURATIONS ---
+import { useTheme } from "@/context/themeProvider";
 
 // Colors for Light Mode (your original colors)
 const priorityConfigLight = {
   High: {
     icon: ArrowUpRight,
     className: "bg-red-100 text-red-700",
-    borderClass: "border-l-4 border-red-500",
+    borderClass: "border-l-5 border-red-500",
   },
   Medium: {
     icon: ArrowDownRight,
     className: "bg-yellow-100 text-yellow-700",
-    borderClass: "border-l-4 border-yellow-500",
+    borderClass: "border-l-5 border-yellow-500",
   },
   Low: {
     icon: Minus,
     className: "bg-green-100 text-green-700",
-    borderClass: "border-l-4 border-green-500",
+    borderClass: "border-l-5 border-green-500",
   },
 };
 
@@ -95,7 +93,7 @@ const RenderDescriptionWithTags = ({
   onTagClick: (tag: string) => void;
   truncateLength?: number;
 }) => {
-  const { theme } = useTheme(); // Get current theme
+  const { theme } = useTheme();
   const activeTagColors = theme === "dark" ? tagColorsDark : tagColorsLight;
 
   const truncatedText =
@@ -146,9 +144,8 @@ const TaskListItem: React.FC<TaskListItemProps> = ({
   onTagClick,
 }) => {
   const { user } = useAuth();
-  const { theme } = useTheme(); // Get current theme
+  const { theme } = useTheme();
 
-  // --- Select active color configuration based on the current theme ---
   const activePriorityConfig =
     theme === "dark" ? priorityConfigDark : priorityConfigLight;
   const activeTicketIdColors =
@@ -166,7 +163,7 @@ const TaskListItem: React.FC<TaskListItemProps> = ({
       const token = localStorage.getItem("token");
       const config = { headers: { Authorization: `Bearer ${token}` } };
       await axios.patch(
-        `http://localhost:5000/api/tasks/${task.id}/status`,
+        `/api/tasks/${task.id}/status`,
         { status: newStatus },
         config
       );
@@ -182,7 +179,7 @@ const TaskListItem: React.FC<TaskListItemProps> = ({
     try {
       const token = localStorage.getItem("token");
       const config = { headers: { Authorization: `Bearer ${token}` } };
-      await axios.delete(`http://localhost:5000/api/tasks/${task.id}`, config);
+      await axios.delete(`/api/tasks/${task.id}`, config);
       onUpdate();
     } catch (error) {
       console.error("Failed to delete task", error);
@@ -194,7 +191,6 @@ const TaskListItem: React.FC<TaskListItemProps> = ({
       className={cn(
         "bg-card rounded-md border flex flex-col p-4 transition-all duration-300 ease-in-out",
         "hover:shadow-xl hover:-translate-y-1 hover:border-primary",
-        "focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-ring focus-within:ring-offset-background",
         activePriorityConfig[task.priority].borderClass
       )}
     >
@@ -264,9 +260,9 @@ const TaskListItem: React.FC<TaskListItemProps> = ({
           </div>
 
           <div className="w-full md:w-auto flex items-center gap-2 md:ml-auto mt-2 md:mt-0">
-            {isAssignee ? (
+            {isAssignee || isAssigner ? (
               <Select value={task.status} onValueChange={handleStatusChange}>
-                <SelectTrigger className="w-full md:w-[130px] text-xs h-8">
+                <SelectTrigger className="w-full md:w-[130px] text-xs font-semibold h-8">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -283,9 +279,9 @@ const TaskListItem: React.FC<TaskListItemProps> = ({
             {isAssigner && (
               <>
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="icon"
-                  className="h-8 w-8 flex-shrink-0"
+                  className="h-8 w-8 flex-shrink-0 hover:bg-foreground hover:text-background hover:scale-110"
                   onClick={() => onEdit(task)}
                 >
                   <Edit className="h-4 w-4" />
@@ -293,7 +289,7 @@ const TaskListItem: React.FC<TaskListItemProps> = ({
                 <Button
                   variant="destructive"
                   size="icon"
-                  className="h-8 w-8 flex-shrink-0"
+                  className="h-8 w-8 flex-shrink-0 hover:scale-110"
                   onClick={handleDelete}
                 >
                   <Trash className="h-4 w-4" />

@@ -57,10 +57,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         try {
           const token = localStorage.getItem("token");
           const config = { headers: { Authorization: `Bearer ${token}` } };
-          const res = await axios.get<User[]>(
-            "http://localhost:5000/api/users",
-            config
-          );
+          const res = await axios.get<User[]>("/api/users", config);
           setUsers(res.data);
         } catch (error) {
           console.error("Failed to fetch users", error);
@@ -95,13 +92,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
       };
 
       if (isEditMode) {
-        await axios.put(
-          `http://localhost:5000/api/tasks/${task!.id}`,
-          taskData,
-          config
-        );
+        await axios.put(`/api/tasks/${task!.id}`, taskData, config);
       } else {
-        await axios.post("http://localhost:5000/api/tasks", taskData, config);
+        await axios.post("/api/tasks", taskData, config);
       }
 
       onTaskCreated();
@@ -118,10 +111,8 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      {/* Removed hardcoded bg-slate-50 to use theme's --card color */}
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          {/* Removed hardcoded text-slate-800 to use theme's --foreground color */}
           <DialogTitle className="text-2xl font-bold">
             {isEditMode ? "Edit Task" : "Create New Task"}
           </DialogTitle>
