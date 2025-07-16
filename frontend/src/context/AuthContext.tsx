@@ -3,20 +3,7 @@
 import { createContext, useState, useEffect, ReactNode } from "react";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-import { User } from "../types";
-
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<any>;
-  register: (name: string, email: string, password: string) => Promise<any>;
-  logout: () => void;
-}
-
-interface DecodedToken {
-  id: number;
-  exp: number;
-}
+import { AuthContextType, DecodedToken, User } from "../types";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
